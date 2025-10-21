@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile?
+  orders  Order[]
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone     String?
+  company   String?
+  balance   Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model ServerPlan {
+  id          String   @id @default(cuid())
+  name        String
+  nameRu      String
+  cpu         Int
+  ram         Int
+  storage     Int
+  bandwidth   Int
+  price       Float
+  popular     Boolean  @default(false)
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders Order[]
+
+  @@map("server_plans")
+}
+
+model Order {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serverPlanId String
+  serverPlan   ServerPlan @relation(fields: [serverPlanId], references: [id])
+  status       OrderStatus @default(PENDING)
+  totalPrice   Float
+  duration     Int        @default(1)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
